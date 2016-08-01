@@ -1,4 +1,4 @@
-echo "# tpm_calc"
+# tpm_calc"
 
 usage
 
