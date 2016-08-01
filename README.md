@@ -1,6 +1,6 @@
-# tpm_calc"
+# tpm_calc
 
-usage
+# usage
 
 $ ./tpm_calc --help
 
