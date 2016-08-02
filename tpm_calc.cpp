@@ -20,7 +20,7 @@ meta head;
 template< class T >
 struct ColumnAdapter {
     ColumnAdapter( size_t column ) : m_column( column ) {}
-    bool operator()( const std::vector< T > & left, const std::vector< T > & right ) {
+    bool operator()( const vector< T > & left, const vector< T > & right ) {
         return left.at( m_column ) < right.at( m_column );
     }
 private:
@@ -51,12 +51,12 @@ vector<vector<double> > load_counts(char* filename, int start_size, int anno_col
 			}		
 			if(n > 0){
 				head.annotation.push_back(string_holder[anno_col-1]);
-				double sizer = (std::stod(string_holder[start_size]) - std::stod(string_holder[start_size-1])) / 1000;
+				double sizer = (stod(string_holder[start_size]) - stod(string_holder[start_size-1])) / 1000;
 				vector<double> struct_holder;
 				int sum_index = 0;
 				for (int i = start_col - 1; i < string_holder.size(); i++){
 					double holder;
-					holder = std::stod(string_holder[i]) / sizer; 
+					holder = stod(string_holder[i]) / sizer; 
 					struct_holder.push_back(holder);
 					head.scale[sum_index] += holder;
 					sum_index++;
@@ -119,7 +119,7 @@ void write_counts(std::vector<std::vector<double>> &counts_matrix, char* tpm_loc
     
     	//determine minimum per subject
     	for(int i = 0; i < head.headers.size(); i++){
-		auto smallest = std::min_element(std::begin(counts_matrix), std::end(counts_matrix), ColumnAdapter<double>(i));
+		auto smallest = min_element(begin(counts_matrix), end(counts_matrix), ColumnAdapter<double>(i));
 		min_val.push_back((*smallest).at(i));  
 	}
 	
@@ -131,7 +131,7 @@ void write_counts(std::vector<std::vector<double>> &counts_matrix, char* tpm_loc
 			if (counts_matrix[i][x] != 0)
 				logtpm << "\t" << counts_matrix[i][x];
 			else{
-				std::normal_distribution<double> normal(min_val[x] - 2, 1);
+				normal_distribution<double> normal(min_val[x] - 2, 1);
 				logtpm << "\t" << normal(generator);
 			}
 		}
