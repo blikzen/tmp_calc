@@ -5,6 +5,8 @@
 #include <fstream>
 #include <math.h> 
 #include <random>
+#include <algorithm>
+#include <cmath>
 
 using namespace std;
 
@@ -14,6 +16,16 @@ struct meta{
 	vector<double> scale;
 };
 meta head;
+
+template< class T >
+struct ColumnAdapter {
+    ColumnAdapter( size_t column ) : m_column( column ) {}
+    bool operator()( const std::vector< T > & left, const std::vector< T > & right ) {
+        return left.at( m_column ) < right.at( m_column );
+    }
+private:
+    size_t m_column;
+};
 
 vector<vector<double> > load_counts(char* filename, int start_size, int anno_col, int start_col){
 	
@@ -74,8 +86,8 @@ void write_counts(std::vector<std::vector<double>> &counts_matrix, char* tpm_loc
 	logtpm.open(logtpm_loc);
 
 	vector<double> min_val;
-	for (x : head.headers)
-		min_val.push_back(1000000);
+	//for (x : head.headers)
+		//min_val.push_back(1000000);
 	
 	cout << "Writing headers\n";
 	tpm << "annotation" << "\t";
@@ -90,31 +102,37 @@ void write_counts(std::vector<std::vector<double>> &counts_matrix, char* tpm_loc
 		} 
 	} 
 	
-	cout << "Writing TPM values\n";
+	cout << "Writing TPM values, calculate logTPM values\n";
 	for(int i = 0; i < head.annotation.size(); i++){
 		tpm << "\n" << head.annotation[i];
 		for (int x = 0; x < counts_matrix[i].size(); x++){
 			double tval = counts_matrix[i][x] / head.scale[x];
-			tpm << "\t" << tval;
-			if(tval > 0){
-				if(tval < min_val[x])
-					min_val[x] = tval;
+			if(!isinf(log2(tval)))
+				counts_matrix[i][x] = log2(tval);
+			else{
+				counts_matrix[i][x] = 0;
 			}
+			tpm << "\t" << tval;
 		}
 	}
 	tpm.close();
+    
+    	//determine minimum per subject
+    	for(int i = 0; i < head.headers.size(); i++){
+		auto smallest = std::min_element(std::begin(counts_matrix), std::end(counts_matrix), ColumnAdapter<double>(i));
+		min_val.push_back((*smallest).at(i));  
+	}
 	
 	cout << "Writing log2 TPM values\n";
 	std::mt19937 generator;
 	for(int i = 0; i < head.annotation.size(); i++){
 		logtpm << "\n" << head.annotation[i];
 		for (int x = 0; x < counts_matrix[i].size(); x++){
-			double tval = counts_matrix[i][x] / head.scale[x];
-			if (tval > 0)
-				logtpm << "\t" << log2(tval);
+			if (counts_matrix[i][x] != 0)
+				logtpm << "\t" << counts_matrix[i][x];
 			else{
 				std::normal_distribution<double> normal(min_val[x] - 2, 1);
-				logtpm << "\t" << log2(normal(generator));
+				logtpm << "\t" << normal(generator);
 			}
 		}
 	}
